@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'use_cdn' => true,
+    'cdn_url' => 'https://unpkg.com/ninja-keys?module',
+    'material_icons_url' => 'https://fonts.googleapis.com/css?family=Material+Icons&display=block',
+    'placeholder' => 'Type a command or search...',
+    'searchPlaceholder' => null,
+    'disableHotkeys' => false,
+    'hideBreadcrumbs' => false,
+    'openHotkey' => 'cmd+k,ctrl+k',
+    'hotKeys' => null,
+    'navigationUpHotkey' => 'up,shift+tab',
+    'navigationDownHotkey' => 'down,tab',
+    'closeHotkey' => 'esc',
+    'goBackHotkey' => 'backspace',
+    'selectHotkey' => 'enter',
+    'hotKeysJoinedView' => false,
+    'noAutoLoadMdIcons' => false,
+    'noHeader' => false,
+    'noFooter' => false,
+    'theme' => 'auto',
+    'onChange' => null,
+    'onOpen' => null,
+    'asset_path' => null,
+];
