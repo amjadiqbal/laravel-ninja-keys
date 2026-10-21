@@ -1,46 +1,79 @@
 {
-  "name": "amjadiqbal/laravel-ninja-keys",
-  "description": "Laravel integration for the ninja-keys web component with a fluent PHP API and Blade directive.",
-  "type": "library",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "AmjadIqbal"
-    }
-  ],
-  "require": {
-    "php": "^8.1",
-    "illuminate/support": "^10.0|^11.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "AmjadIqbal\\NinjaKeys\\": "src/"
-    }
-  },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "AmjadIqbal\\NinjaKeys\\NinjaKeysServiceProvider"
-      ],
-      "aliases": {
-        "NinjaKeys": "AmjadIqbal\\NinjaKeys\\Facades\\NinjaKeys"
-      }
-    }
-  },
-  "require-dev": {
-    "orchestra/testbench": "^8.0|^9.0",
-    "pestphp/pest": "^2.0",
-    "pestphp/pest-plugin-laravel": "^2.0"
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "AmjadIqbal\\NinjaKeys\\Tests\\": "tests/"
-    }
-  },
-  "config": {
-    "sort-packages": true,
-    "allow-plugins": {
-      "pestphp/pest-plugin": true
-    }
-  }
+    "name": "amjadiqbal/laravel-ninja-keys",
+    "description": "Cmd+K command palette for Laravel: build ninja-keys actions in PHP, filter them by Gate abilities, render the keyboard shortcut menu with one Blade component, with Livewire wire:navigate support and no npm build step.",
+    "keywords": [
+        "laravel",
+        "laravel-package",
+        "ninja-keys",
+        "command-palette",
+        "cmd-k",
+        "command-menu",
+        "keyboard-shortcuts",
+        "hotkeys",
+        "spotlight",
+        "web-components",
+        "blade",
+        "livewire",
+        "search"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/amjadiqbal/laravel-ninja-keys",
+    "authors": [
+        {
+            "name": "Amjad Iqbal",
+            "homepage": "https://amjad.com.pk",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/amjadiqbal/laravel-ninja-keys/issues",
+        "source": "https://github.com/amjadiqbal/laravel-ninja-keys",
+        "docs": "https://github.com/amjadiqbal/laravel-ninja-keys#readme"
+    },
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^12.0|^13.0",
+        "illuminate/view": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.20",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "phpstan/phpstan": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "AmjadIqbal\\NinjaKeys\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AmjadIqbal\\NinjaKeys\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "AmjadIqbal\\NinjaKeys\\NinjaKeysServiceProvider"
+            ],
+            "aliases": {
+                "NinjaKeys": "AmjadIqbal\\NinjaKeys\\Facades\\NinjaKeys"
+            }
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "lint": "vendor/bin/pint --test",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

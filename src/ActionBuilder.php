@@ -1,91 +1,128 @@
 <?php
- 
+
 namespace AmjadIqbal\NinjaKeys;
 
+/**
+ * Fluent builder for one ninja-keys action. Every call writes straight into the Manager, so the
+ * builder can be discarded at any point.
+ */
 class ActionBuilder
 {
-    protected Manager $manager;
-    protected string $id;
+    public function __construct(
+        protected Manager $manager,
+        protected string $id,
+    ) {}
 
-    public function __construct(Manager $manager, string $id)
+    public function id(): string
     {
-        $this->manager = $manager;
-        $this->id = $id;
+        return $this->id;
     }
 
-    public function set(string $key, mixed $value): self
+    public function set(string $key, mixed $value): static
     {
         $this->manager->upsert($this->id, [$key => $value]);
+
         return $this;
     }
 
-    public function title(string $title): self
+    public function title(string $title): static
     {
         return $this->set('title', $title);
     }
 
-    public function description(string $description): self
+    /** Not displayed by ninja-keys; passed through in the action data for your own handlers. */
+    public function description(string $description): static
     {
         return $this->set('description', $description);
     }
 
-    public function icon(string $iconHtml): self
+    /** Raw HTML/SVG icon. Rendered unescaped by ninja-keys, so never pass user input. */
+    public function icon(string $html): static
     {
-        return $this->set('icon', $iconHtml);
+        return $this->set('icon', $html);
     }
 
-    public function mdIcon(string $name): self
+    /** Material Icons ligature name, e.g. "home". Needs the material_icons_url font. */
+    public function mdIcon(string $name): static
     {
         return $this->set('mdIcon', $name);
     }
 
-    public function href(string $href): self
+    /** Open this URL when the action is chosen ("_blank" opens a new tab). */
+    public function href(string $url, ?string $target = null): static
     {
-        return $this->set('href', $href);
+        $this->set('href', $url);
+
+        return $target === null ? $this : $this->set('target', $target);
     }
 
-    public function target(string $target): self
+    /**
+     * @param  array<string, mixed>|string  $parameters
+     */
+    public function route(string $name, array|string $parameters = [], ?string $target = null): static
+    {
+        return $this->href(route($name, $parameters), $target);
+    }
+
+    public function target(string $target): static
     {
         return $this->set('target', $target);
     }
 
-    public function parent(string $parentId): self
+    public function parent(string $parentId): static
     {
         return $this->set('parent', $parentId);
     }
 
-    public function children(array $ids): self
+    /**
+     * Child action ids (flat data) or nested action arrays (tree data).
+     *
+     * @param  array<int, string|array<string, mixed>>  $children
+     */
+    public function children(array $children): static
     {
-        return $this->set('children', $ids);
+        return $this->set('children', $children);
     }
 
-    public function shortcut(string $shortcut): self
-    {
-        return $this->set('shortcut', $shortcut);
-    }
-
-    public function hotkey(string $hotkey): self
+    /** hotkeys-js shortcut that runs the action even while the palette is closed, e.g. "ctrl+shift+n". */
+    public function hotkey(string $hotkey): static
     {
         return $this->set('hotkey', $hotkey);
     }
 
-    public function section(string $section): self
+    /** Alias of hotkey(). */
+    public function shortcut(string $shortcut): static
+    {
+        return $this->hotkey($shortcut);
+    }
+
+    public function section(string $section): static
     {
         return $this->set('section', $section);
     }
 
-    public function handler(string $functionName): self
+    /** Extra search terms, space separated. */
+    public function keywords(string $keywords): static
+    {
+        return $this->set('keywords', $keywords);
+    }
+
+    /**
+     * Name of a global function, window[name](action). Return {keepOpen: true} from it to keep the
+     * palette open.
+     */
+    public function handler(string $functionName): static
     {
         return $this->set('handler', $functionName);
     }
 
-    public function can(string|array $ability): self
+    /**
+     * Only show the action when the current user passes at least one of these Gate abilities.
+     *
+     * @param  string|array<int, string>  $abilities
+     */
+    public function can(string|array $abilities): static
     {
-        return $this->set('can', $ability);
-    }
-
-    public function keywords(string $keywords): self
-    {
-        return $this->set('keywords', $keywords);
+        return $this->set('can', $abilities);
     }
 }
