@@ -75,7 +75,24 @@ it('filters nested tree children too', function () {
         ],
     ]]);
 
-    expect(array_column($m->getActions()[0]['children'], 'id'))->toBe(['light']);
+    $actions = collect($m->getActions())->keyBy('id');
+    expect($actions->keys()->all())->toBe(['theme', 'light']);
+    expect($actions['theme']['children'])->toBe(['light']);
+    expect($actions['light']['parent'])->toBe('theme');
+});
+
+it('flattens tree data so later root actions keep no parent', function () {
+    $m = app(Manager::class);
+    $m->addActions([
+        ['id' => 'theme', 'title' => 'Theme', 'children' => [
+            ['id' => 'light', 'title' => 'Light', 'children' => [['id' => 'warm', 'title' => 'Warm']]],
+        ]],
+        ['id' => 'home', 'title' => 'Home'],
+    ]);
+
+    $parents = collect($m->getActions())->mapWithKeys(fn ($a) => [$a['id'] => $a['parent'] ?? null])->all();
+
+    expect($parents)->toBe(['theme' => null, 'home' => null, 'light' => 'theme', 'warm' => 'light']);
 });
 
 it('runs define() callbacks at render time with the current user', function () {

@@ -96,7 +96,9 @@ class Manager
             $this->definitions->run($this);
         }
 
-        $visible = $this->filter(array_values($this->actions));
+        // ninja-keys 1.2.2 mis-parents root actions that follow a nested one (its _flattern reuses
+        // the parent variable), so tree data is always flattened here before it reaches the browser.
+        $visible = $this->flatten($this->filter(array_values($this->actions)));
 
         // Flat data: drop actions whose parent was hidden, and hidden ids from children lists.
         do {
@@ -139,7 +141,10 @@ class Manager
                 unset($action['can']);
             }
 
-            $id = (string) ($action['id'] ?? '');
+            if (! isset($action['id']) || ! is_scalar($action['id'])) {
+                throw new InvalidArgumentException('Every ninja-keys action needs an "id".');
+            }
+            $id = (string) $action['id'];
             if (! isset($action['title']) || $action['title'] === '') {
                 throw new InvalidArgumentException("ninja-keys action \"{$id}\" has no title.");
             }
@@ -157,6 +162,32 @@ class Manager
         }
 
         return $out;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $actions
+     * @return array<int, array<string, mixed>>
+     */
+    protected function flatten(array $actions, ?string $parent = null): array
+    {
+        $flat = [];
+        $nested = [];
+
+        foreach ($actions as $action) {
+            if ($parent !== null) {
+                $action['parent'] ??= $parent;
+            }
+
+            if (isset($action['children']) && is_array($action['children']) && ! $this->isFlatList($action['children'])) {
+                $children = $action['children'];
+                $action['children'] = array_map(fn (array $child) => (string) $child['id'], $children);
+                $nested = array_merge($nested, $this->flatten($children, (string) $action['id']));
+            }
+
+            $flat[] = $action;
+        }
+
+        return array_merge($flat, $nested);
     }
 
     /**

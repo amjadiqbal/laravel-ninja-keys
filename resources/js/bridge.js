@@ -23,6 +23,7 @@
     }
   }
 
+  // Data arrives flat (the package flattens trees), so children are id lists.
   function prepare(actions) {
     return actions.map(function (source) {
       var action = Object.assign({}, source);
@@ -31,19 +32,12 @@
       } else if (source.href) {
         action.handler = function () { navigate(source); };
       }
-      if (Array.isArray(source.children) && source.children.some(function (c) { return typeof c === 'object'; })) {
-        action.children = prepare(source.children);
-      }
       return action;
     });
   }
 
   function hotkeysOf(actions) {
-    return actions.reduce(function (keys, a) {
-      if (a.hotkey) keys.push(a.hotkey);
-      if (Array.isArray(a.children)) keys = keys.concat(hotkeysOf(a.children.filter(function (c) { return typeof c === 'object'; })));
-      return keys;
-    }, []);
+    return actions.filter(function (a) { return a.hotkey; }).map(function (a) { return a.hotkey; });
   }
 
   customElements.whenDefined('ninja-keys').then(function () {
