@@ -39,6 +39,8 @@ NinjaKeys::define(function (Manager $palette) {
 
 Press <kbd>Cmd</kbd>+<kbd>K</kbd> (or <kbd>Ctrl</kbd>+<kbd>K</kbd>) and type.
 
+Docs and demo: https://amjad.com.pk/laravel/packages/laravel-ninja-keys
+
 ## Why this package
 
 [ninja-keys](https://github.com/ssleptsov/ninja-keys) is a small, framework-free command palette web
