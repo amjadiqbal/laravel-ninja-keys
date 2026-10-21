@@ -1,44 +1,72 @@
-# Laravel Ninja Keys
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.png">
+    <img alt="Laravel Ninja Keys: Cmd+K command palette for Laravel" src="art/banner-light.png" width="100%">
+  </picture>
+</p>
 
-[![Packagist Version](https://img.shields.io/packagist/v/amjadiqbal/laravel-ninja-keys.svg?style=flat-square)](https://packagist.org/packages/amjadiqbal/laravel-ninja-keys)
-[![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
-[![PHP Version](https://img.shields.io/packagist/php-v/amjadiqbal/laravel-ninja-keys.svg?style=flat-square)](https://packagist.org/packages/amjadiqbal/laravel-ninja-keys)
-[![Laravel](https://img.shields.io/badge/laravel-%5E10%20%7C%20%5E11-red?style=flat-square)](#requirements)
-[![Tests](https://img.shields.io/badge/tested%20with-Pest-orange?style=flat-square)](#testing)
+# Laravel Ninja Keys: a Cmd+K command palette for Laravel
 
-Laravel integration for the [ninja-keys](https://github.com/ssleptsov/ninja-keys) web component. Ships a fluent PHP API, a Blade directive for rendering and JS-bridge logic, and Gate-based authorization filtering for server-side visibility.
+Add a keyboard-first **Cmd+K / Ctrl+K command palette** to any Laravel app. Build the actions in PHP,
+hide the ones a user may not use with your Gate abilities, and render the
+[ninja-keys](https://github.com/ssleptsov/ninja-keys) web component with one Blade tag. Works with Blade,
+Livewire (including `wire:navigate`) and Alpine. No JavaScript to write, no npm build step.
 
-## Table of Contents
-- Overview
-- Requirements
-- Installation
-- Quickstart
-- Configuration
-- Rendering Options
-- Fluent API
-- Authorization
-- Event Hooks
-- Styling
-- Data Model Mapping
-- Testing
-- Versioning
-- Contributing
-- Security
-- License
-- Credits
+[![Latest Version](https://img.shields.io/packagist/v/amjadiqbal/laravel-ninja-keys.svg?style=flat-square)](https://packagist.org/packages/amjadiqbal/laravel-ninja-keys)
+[![PHP Version](https://img.shields.io/packagist/php-v/amjadiqbal/laravel-ninja-keys?style=flat-square)](https://packagist.org/packages/amjadiqbal/laravel-ninja-keys)
+[![License](https://img.shields.io/packagist/l/amjadiqbal/laravel-ninja-keys.svg?style=flat-square)](LICENSE.md)
 
-## Overview
-- Keyboard command palette powered by ninja-keys (Web Component).
-- Laravel-friendly API for building actions via PHP.
-- Server-side filtering using Gate abilities (hide unauthorized actions).
-- CDN or local asset loading; Material Icons support.
-- Theme handling (auto/dark/light) and optional footer control.
-- Works with flat or tree action data structures.
-- Bridges string handlers to global window functions safely.
+<p align="center">
+  <img alt="A Laravel dashboard with the Cmd+K command palette open, showing actions grouped into Preferences, Billing and Navigate with their keyboard shortcuts" src="art/screenshot.png" width="100%">
+</p>
+
+```php
+// app/Providers/AppServiceProvider.php
+use AmjadIqbal\NinjaKeys\Facades\NinjaKeys;
+use AmjadIqbal\NinjaKeys\Manager;
+
+NinjaKeys::define(function (Manager $palette) {
+    $palette->addAction('dashboard')->title('Dashboard')->mdIcon('dashboard')->route('dashboard')->hotkey('alt+1');
+    $palette->addAction('invoices')->title('Invoices')->mdIcon('receipt_long')->route('invoices.index');
+    $palette->addAction('users')->title('Manage users')->mdIcon('group')->route('users.index')->can('manage-users');
+});
+```
+
+```blade
+{{-- resources/views/layouts/app.blade.php, before </body> --}}
+<x-ninja-keys />
+```
+
+Press <kbd>Cmd</kbd>+<kbd>K</kbd> (or <kbd>Ctrl</kbd>+<kbd>K</kbd>) and type.
+
+## Why this package
+
+[ninja-keys](https://github.com/ssleptsov/ninja-keys) is a small, framework-free command palette web
+component (about 11,000 npm downloads a week). Dropping it into a Laravel app by hand means writing a
+script per layout, building the action list in JavaScript, and remembering which actions each user is
+allowed to see. This package does those parts:
+
+- **Actions in PHP.** A fluent builder with ninja-keys' own field names, plus `route()` and `href()` so
+  navigation actions need no JavaScript at all.
+- **Permission-aware.** `->can('manage-users')` runs your Gate abilities on the server, so actions a user
+  may not use are never sent to the browser, and neither are their sub-actions.
+- **Per-user at render time.** `NinjaKeys::define()` callbacks run when the palette renders, so they can
+  use `auth()->user()`, the current route and the request. Safe under Octane.
+- **Livewire-ready.** Survives `wire:navigate` without duplicate shortcuts, and can navigate with
+  `Livewire.navigate()` in SPA mode.
+- **Pinned and self-hosted by default.** ninja-keys 1.2.2 ships inside the package as one ES module with
+  its exact Lit 2 and hotkeys-js versions, published to `public/vendor/ninja-keys` by Laravel's usual
+  `laravel-assets` step. No third-party script requests unless you choose the CDN.
+- **Works around three ninja-keys bugs.** String handlers no longer throw `handler is not a function`,
+  nested (tree) actions no longer pull the root actions after them into their submenu, and typing `(` or
+  `[` in the search box no longer throws an error on every keystroke.
 
 ## Requirements
-- PHP: ^8.1
-- Laravel: ^10.0 or ^11.0
+
+- PHP 8.3+
+- Laravel 12 or 13
+- ninja-keys 1.2.2 is bundled; nothing to install with npm
+- Optional: Livewire (tested with 4.4.7)
 
 ## Installation
 
@@ -46,256 +74,260 @@ Laravel integration for the [ninja-keys](https://github.com/ssleptsov/ninja-keys
 composer require amjadiqbal/laravel-ninja-keys
 ```
 
-Auto-discovery registers the service provider and facade.
-
-If you use Pest for tests:
-
-```bash
-composer config --no-plugins allow-plugins.pestphp/pest-plugin true
-```
-
-## Quickstart
-
-Publish config:
+The service provider and the `NinjaKeys` facade are auto-discovered. The JavaScript bundle is published to
+`public/vendor/ninja-keys/ninja-keys.js` automatically on `composer update`, because a default Laravel
+app runs `vendor:publish --tag=laravel-assets` after every update. If your app does not, publish it once:
 
 ```bash
-php artisan vendor:publish --tag=config
+php artisan vendor:publish --tag=ninja-keys-assets
 ```
 
-Add to your layout:
+Until the bundle is published the palette loads ninja-keys from jsDelivr instead, so it works either way.
+`php artisan about` shows the installed version and which script source is configured.
+
+## Usage
+
+### Render the palette
+
+Put the component once in your main layout, before `</body>`:
 
 ```blade
-@ninjaKeysScripts
+<x-ninja-keys />
+
+{{-- or as a directive --}}
+@ninjaKeys
 ```
 
-Register actions:
+Override any config option for one page with an attribute:
+
+```blade
+<x-ninja-keys placeholder="Jump to..." theme="dark" open-hotkey="ctrl+j" />
+<x-ninja-keys :config="['hideBreadcrumbs' => true, 'noFooter' => true]" />
+```
+
+Any element with `data-ninja-keys-open` opens the palette on click, optionally straight into a submenu:
+
+```blade
+<button data-ninja-keys-open>Search <kbd>⌘K</kbd></button>
+<button data-ninja-keys-open="theme">Change theme…</button>
+```
+
+### Register actions
+
+Register actions anywhere before the view renders: in a controller for page-specific actions, or with
+`define()` in a service provider for the global ones.
 
 ```php
 use AmjadIqbal\NinjaKeys\Facades\NinjaKeys;
 
-NinjaKeys::addAction('create-post')
-    ->title('New Post')
-    ->description('Create a post')
-    ->shortcut('ctrl+n')     // normalized to JS hotkey
-    ->parent('posts')
-    ->mdIcon('note_add')
-    ->handler('onCreatePost') // window.onCreatePost(detail) will be called
-    ->can(['create-post', 'manage-posts']); // visible if any ability allows
+NinjaKeys::addAction('new-invoice')
+    ->title('New invoice')
+    ->section('Billing')              // group heading
+    ->mdIcon('receipt_long')          // Material Icons name, or ->icon('<svg ...>')
+    ->keywords('bill charge create')  // extra search terms
+    ->hotkey('alt+n')                 // works even while the palette is closed
+    ->route('invoices.create');       // or ->href('/invoices/create'), ->href($url, '_blank')
 ```
 
-Add global handlers:
-
-```html
-<script>
-  window.onCreatePost = (detail) => { /* your logic */ };
-</script>
-```
-
-## Configuration
-
-Key options (config/ninja-keys.php):
-
-- use_cdn (bool) — load from CDN; otherwise asset_path
-- cdn_url (string) — default https://unpkg.com/ninja-keys?module
-- asset_path (string|null) — published asset path if not using CDN
-- material_icons_url (string|null) — Google Fonts URL to load Material Icons
-- placeholder, searchPlaceholder (string|null) — search input placeholders
-- disableHotkeys, hideBreadcrumbs, hotKeysJoinedView, noAutoLoadMdIcons (bool)
-- openHotkey, hotKeys (string) — hotKeys is an alias for openHotkey
-- navigationUpHotkey, navigationDownHotkey, closeHotkey, goBackHotkey, selectHotkey (string)
-- theme (light|dark|auto)
-- noHeader, noFooter (bool)
-- onChange (string|null) — window function name to receive change events
-- onOpen (string|null) — window function name called before ninja.open()
-
-Publish and edit:
-
-```bash
-php artisan vendor:publish --tag=config
-```
-
-## Rendering Options
-
-- Blade directive
-
-```blade
-@ninjaKeysScripts
-```
-
-- Blade component (optional)
-  - Component class exists at `src/Components/NinjaKeys.php`
-  - Register alias manually if desired:
-    ```php
-    // in a service provider
-    \Illuminate\Support\Facades\Blade::component('ninja-keys', \AmjadIqbal\NinjaKeys\Components\NinjaKeys::class);
-    ```
-  
-#### Load from local asset instead of CDN
-
-Publish assets to your public directory (or bundle in your build), then set:
+Plain arrays work too, in ninja-keys' own shape:
 
 ```php
-// config/ninja-keys.php
-'use_cdn' => false,
-'asset_path' => '/assets/js/ninja-keys.js', // example path
-```
-
-## Fluent API
-
-```php
-use AmjadIqbal\NinjaKeys\Facades\NinjaKeys;
-
 NinjaKeys::addActions([
-    ['id' => 'Theme', 'title' => 'Change theme...', 'hotkey' => 'ctrl+t', 'children' => ['Light', 'Dark', 'System']],
-    ['id' => 'Light', 'title' => 'Light Theme', 'parent' => 'Theme', 'mdIcon' => 'light_mode', 'handler' => 'setLightTheme'],
-    ['id' => 'Dark', 'title' => 'Dark Theme', 'parent' => 'Theme', 'mdIcon' => 'dark_mode', 'handler' => 'setDarkTheme'],
+    ['id' => 'help', 'title' => 'Help center', 'mdIcon' => 'help', 'href' => 'https://help.example.com', 'target' => '_blank'],
 ]);
 ```
 
-Convenience fields:
-- href(string) and target(string) are included for your own handlers/UI logic (they are not executed automatically by the component).
+`has()`, `forget()` and `clear()` let a page remove or replace global actions.
 
-## Authorization
-- Use `can(string|array)` to attach Gate abilities.
-- If any provided ability allows, the action is included; otherwise excluded server-side.
-- Gate definitions in tests or app boot:
-  ```php
-  Gate::define('create-post', fn ($user = null) => true);
-  ```
+### Submenus
 
-## Event Hooks
-- onChange: listen to component change and receive `{ search, actions }`.
-- onOpen: called before `ninja.open(...)` with `{ args }`.
-- Handler bridging:
-  - If an action’s `handler` is a string (e.g., `"myFunction"`), the directive listens to `selected` and calls `window[handler](event.detail)` when present.
-  - Recommended: keep handlers small and side-effect free; heavy logic can be deferred.
+Use either flat data with `parent` and `children` ids, or nested arrays. Both reach the browser flat.
 
-## Styling
-- Theme:
-  - `theme = auto`: toggles dark class based on `prefers-color-scheme`.
-  - `theme = dark`: forces `class="dark"` on the component.
-- Footer:
-  - `noFooter = true` renders an empty footer slot.
-- Material Icons:
-  - Load via `material_icons_url` or disable with `noAutoLoadMdIcons`.
-- CSS Shadow Parts (from ninja-keys):
-  - `actions-list`, `ninja-action`, `ninja-selected`, `ninja-input`, `ninja-input-wrapper`
-  - Example:
-    ```css
-    ninja-keys::part(ninja-action) { border-radius: 8px; }
-    ```
-  
-#### CSS Variables (examples)
+```php
+NinjaKeys::addAction('theme')->title('Change theme…')->mdIcon('palette')->children(['theme-light', 'theme-dark']);
+NinjaKeys::addAction('theme-light')->title('Light')->parent('theme')->handler('setLightTheme');
+NinjaKeys::addAction('theme-dark')->title('Dark')->parent('theme')->handler('setDarkTheme');
+
+// or nested
+NinjaKeys::addActions([
+    ['id' => 'theme', 'title' => 'Change theme…', 'children' => [
+        ['id' => 'theme-light', 'title' => 'Light', 'handler' => 'setLightTheme'],
+        ['id' => 'theme-dark', 'title' => 'Dark', 'handler' => 'setDarkTheme'],
+    ]],
+]);
+```
+
+### JavaScript handlers
+
+`handler()` names a global function. It receives the action; return `{ keepOpen: true }` to keep the
+palette open.
+
+```html
+<script>
+  window.setDarkTheme = (action) => document.documentElement.classList.add('dark');
+  window.addToCounter = () => { counter++; return { keepOpen: true }; };
+</script>
+```
+
+### Only show what the user may do
+
+```php
+Gate::define('manage-users', fn (User $user) => $user->is_admin);
+
+NinjaKeys::addAction('users')->title('Users')->can('manage-users')->children(['invite']);
+NinjaKeys::addAction('invite')->title('Invite a user')->parent('users')->route('users.invite');
+
+// visible when any ability passes
+NinjaKeys::addAction('reports')->title('Reports')->can(['view-reports', 'manage-users']);
+```
+
+Hidden actions and their sub-actions are removed on the server; they never appear in the page source.
+
+### Per-user and global actions with define()
+
+`define()` callbacks are stored once and run every time the palette renders, with the request, the
+logged-in user and route helpers available:
+
+```php
+NinjaKeys::define(function (Manager $palette) {
+    foreach (auth()->user()?->teams ?? [] as $team) {
+        $palette->addAction("team-{$team->id}")->title("Switch to {$team->name}")
+            ->section('Teams')->route('teams.switch', $team);
+    }
+});
+```
+
+Actions added with `addAction()` during a request belong to that request only (the manager is scoped, so
+Octane workers start every request clean). `define()` is the place for actions every page should have.
+
+### Livewire
+
+The palette keeps working across `wire:navigate`: the new page's palette replaces the old one, and the old
+page's action shortcuts are removed, so they never fire twice or on the wrong page. To make `href()` and
+`route()` actions navigate with `Livewire.navigate()` instead of a full page load:
+
+```php
+// config/ninja-keys.php
+'livewire_navigate' => true,
+```
+
+### Events
+
+Name global functions in the config to hear what the palette does:
+
+```php
+'onOpen' => 'paletteOpened',     // ({ parent })
+'onChange' => 'paletteSearched', // ({ search, actions })
+'onSelected' => 'actionChosen',  // ({ search, action })
+```
+
+The element's own `change` and `selected` DOM events bubble too, so `document.addEventListener('selected', ...)`
+works as well.
+
+### Styling
+
+`theme` is `auto` (follows `prefers-color-scheme`), `light` or `dark`. Everything else is ninja-keys' CSS
+variables and shadow parts:
 
 ```css
 ninja-keys {
   --ninja-width: 640px;
-  --ninja-accent-color: #6e5ed2;
-  --ninja-icon-size: 1.2em;
-  --ninja-selected-background: #f8f9fb;
+  --ninja-accent-color: #6d28d9;
+  --ninja-selected-background: #f5f3ff;
 }
+ninja-keys::part(ninja-action) { border-radius: 8px; }
 ```
 
-## Data Model Mapping
+Parts: `actions-list`, `ninja-action`, `ninja-selected`, `ninja-icon`, `ninja-input`, `ninja-input-wrapper`.
 
-ActionBuilder → Ninja Keys fields:
-- addAction(id) → id
-- title(string) → title
-- description(string) → description
-- icon(string) → icon (HTML/SVG)
-- mdIcon(string) → mdIcon (Material icon name)
-- parent(string) → parent
-- children(array) → children
-- shortcut(string) → normalized to hotkey
-- hotkey(string) → hotkey
-- section(string) → section
-- keywords(string) → keywords
-- handler(string) → handler (global window function name)
-- href(string), target(string) → convenience extras (not auto-executed)
-- can(string|array) → Gate abilities for server-side filtering
+## Configuration
 
-Manager:
-- addActions(array) → bulk registration
-- getActions() → normalized and authorization-filtered array
+```bash
+php artisan vendor:publish --tag=ninja-keys-config
+```
 
-#### Flat vs Tree
-- Flat: use `parent` and `children` ids to nest menus.
-- Tree: provide nested `children` arrays; library supports both.
+| Key | Default | |
+|---|---|---|
+| `script` | `local` | `local` (bundled, published file), `cdn` (jsDelivr) or `null` (you `import 'ninja-keys'` in Vite). Env: `NINJA_KEYS_SCRIPT` |
+| `cdn_url` | jsDelivr `ninja-keys@1.2.2/+esm` | |
+| `asset_url` | `/vendor/ninja-keys/ninja-keys.js` | where the bundle is published |
+| `material_icons_url` | Google Fonts Material Icons | `null` if you only use `icon()` or no icons |
+| `placeholder` | `Type a command or search...` | |
+| `openHotkey` | `cmd+k,ctrl+k` | hotkeys-js syntax |
+| `navigationUpHotkey`, `navigationDownHotkey`, `closeHotkey`, `goBackHotkey`, `selectHotkey` | ninja-keys defaults | |
+| `disableHotkeys` | `false` | don't register action hotkeys |
+| `hideBreadcrumbs`, `hotKeysJoinedView`, `noAutoLoadMdIcons`, `noFooter` | `false` | |
+| `theme` | `auto` | `auto`, `light`, `dark` |
+| `livewire_navigate` | `false` | |
+| `onOpen`, `onChange`, `onSelected` | `null` | global function names |
+
+The view is publishable with `--tag=ninja-keys-views`. When you use a CSP nonce through `Vite::useCspNonce()`,
+both scripts carry it.
+
+## About ninja-keys and its maintenance
+
+ninja-keys' last release is 1.2.2 (July 2022). It still works in current browsers and is still downloaded
+about 11,000 times a week, but upstream bugs are not being fixed. This package copes with that by:
+
+- pinning 1.2.2 and bundling it with the exact dependency versions it was built for (the CDN builds pull
+  the latest lit-html 3 next to Lit 2);
+- working around the three bugs that affect normal use (string handlers, tree data, regex characters in
+  the search box);
+- keeping the browser side small: everything specific to Laravel lives in PHP and one short bridge script,
+  so moving to a maintained palette later would not change your action definitions.
+
+## Upgrading from 0.x (dev-main)
+
+- Requires PHP 8.3 and Laravel 12 or 13.
+- Config is published with `--tag=ninja-keys-config` (was `config`). `use_cdn` and `asset_path` became
+  `script` and `asset_url`; `hotKeys`, `searchPlaceholder` and `noHeader` were removed.
+- Handlers now receive the action (ninja-keys' own convention) instead of `{ search, action }`; use
+  `onSelected` for the latter.
+- `@ninjaKeysScripts` still works; `<x-ninja-keys />` and `@ninjaKeys` are the new names.
 
 ## Testing
 
-Pest and Testbench included:
-
 ```bash
-composer config --no-plugins allow-plugins.pestphp/pest-plugin true
-composer update
-./vendor/bin/pest
+composer test
+scripts/ci-local.sh   # every PHP 8.3–8.5 × Laravel 12/13 combination, Pint and PHPStan
 ```
 
-Run a single test:
+## Need this built into your app, or something custom?
 
-```bash
-./vendor/bin/pest tests/ManagerTest.php
-```
+I build Laravel packages, admin panels and Livewire features for teams. If you'd like a command palette
+designed around your app's real workflows, or need something this package doesn't do,
+[get in touch](https://amjad.com.pk/contact?utm_source=github&utm_medium=readme&utm_campaign=laravel-ninja-keys).
 
-Static analysis, style and coverage (optional suggestions):
-- phpstan: `vendor/bin/phpstan analyse src`
-- pint: `vendor/bin/pint`
-- coverage: `./vendor/bin/pest --coverage-html coverage/`
+## Support
 
-## Troubleshooting
-- Handler not firing:
-  - Ensure `handler` is a string and the global function exists: `window.myFunction = (detail) => { ... }`
-- Action hidden unexpectedly:
-  - Check `can()` abilities; Gate must return true for at least one ability.
-- Material Icons missing:
-  - Ensure `material_icons_url` is set, or disable with `noAutoLoadMdIcons`.
-- Theme not switching on auto:
-  - Confirm browser supports `prefers-color-scheme`; ensure no CSS overrides are preventing `.dark` class effects.
-- CDN blocked:
-  - Switch to local asset by setting `use_cdn=false` and `asset_path`.
+- 🐛 **Bug or feature request**: [open an issue](https://github.com/amjadiqbal/laravel-ninja-keys/issues)
+- 🔒 **Security issue**: please report privately via GitHub's security tab
 
-## Performance
-- Avoid registering an excessive number of actions; use `keywords` for better searchability.
-- Group actions logically via `section` to improve UX.
-- Prefer short, deterministic handlers; delegate long work to async functions if needed.
-- Cache computed action arrays on the server if you build them dynamically on each request.
+## Need this customised, or something built?
 
-## FAQ
-- Difference between `shortcut` and `hotkey`?
-  - `shortcut` is normalized to `hotkey`. You can use either, but only `hotkey` is sent to the component.
-- Can I navigate externally?
-  - Store `href` and `target` on actions and implement logic in your handler to perform navigation.
-- How to hide breadcrumbs?
-  - Set `hideBreadcrumbs=true` in config.
-- How to disable registering action hotkeys?
-  - Set `disableHotkeys=true` in config to stop auto-registering action hotkeys.
-- Flat vs Tree data?
-  - Use `parent`/`children` in flat mode or nested arrays in tree mode; pick whichever suits your data model.
+I'm available for custom development, package integration, and technical consulting.
 
-## CI & Publishing
-- Validate and test:
-  ```bash
-  composer validate
-  ./vendor/bin/pest
-  ```
-- Tag a release (after publishing to Packagist):
-  - Follow SemVer; update composer version range if needed.
-- GitHub Actions (suggested):
-  - Setup PHP matrix (^8.1), run `composer install`, `composer validate`, `./vendor/bin/pest`.
+[![Hire me on Upwork](https://img.shields.io/badge/Hire%20me-Upwork-6FDA44?style=flat-square&logo=upwork&logoColor=white)](https://www.upwork.com/freelancers/amjadkhatri)
 
-## Versioning
-- Follows semantic versioning once published.
-- Compatibility targets: PHP ^8.1, Laravel ^10|^11.
+## More packages
 
-## Contributing
-- PRs and issues are welcome. Please include tests where appropriate.
+Part of a family of open-source packages. See [all of them](https://github.com/amjadiqbal?tab=repositories).
 
-## Security
-- No secrets stored; do not commit keys/tokens. Report vulnerabilities privately.
-
-## License
-- MIT © AmjadIqbal
+| | |
+|---|---|
+| [laravel-driver-js](https://github.com/amjadiqbal/laravel-driver-js) | Product tours and onboarding for Laravel |
+| [kiln](https://github.com/amjadiqbal/kiln) | Deploy-time OPcache control for Laravel |
+| [laravel-tiptap](https://github.com/amjadiqbal/laravel-tiptap) | Tiptap editor for Laravel |
+| [laravel-rough-notation](https://github.com/amjadiqbal/laravel-rough-notation) | Hand-drawn highlights and annotations for Blade |
 
 ## Credits
-- Built on top of the excellent [ninja-keys](https://github.com/ssleptsov/ninja-keys) by Sergei Sleptsov.
+
+- [ninja-keys](https://github.com/ssleptsov/ninja-keys) by Serhii Slieptsov (MIT), which does all the work
+  in the browser, with [Lit](https://lit.dev) (BSD-3-Clause), [hotkeys-js](https://github.com/jaywcjlove/hotkeys-js)
+  (MIT) and [@material/mwc-icon](https://github.com/material-components/material-web) (Apache-2.0), all
+  included in the bundled file. This package is an independent wrapper and is not affiliated with ninja-keys.
+- [Amjad Iqbal](https://amjad.com.pk)
+
+## License
+
+MIT. See [LICENSE.md](LICENSE.md).

@@ -51,6 +51,18 @@
 
     el.data = prepare(opts.data || []);
 
+    // ninja-keys 1.2.2 turns the search text into a RegExp, so "(" or "[" throws on every keystroke.
+    // Escape it in ninja-header's (non-composed) change event, before ninja-keys' own listener reads it.
+    el.updateComplete.then(function () {
+      var header = el.shadowRoot && el.shadowRoot.querySelector('ninja-header');
+      if (!header) return;
+      header.addEventListener('change', function (e) {
+        if (e.detail && typeof e.detail.search === 'string') {
+          e.detail.search = e.detail.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+      }, true);
+    });
+
     if (opts.onOpen) {
       var open = el.open.bind(el);
       el.open = function (options) {
@@ -58,7 +70,11 @@
         return open(options);
       };
     }
-    if (opts.onChange) el.addEventListener('change', function (e) { callGlobal(opts.onChange, e.detail); });
+    if (opts.onChange) {
+      el.addEventListener('change', function (e) {
+        callGlobal(opts.onChange, { search: e.detail.search.replace(/\\(.)/g, '$1'), actions: e.detail.actions });
+      });
+    }
     if (opts.onSelected) el.addEventListener('selected', function (e) { callGlobal(opts.onSelected, e.detail); });
 
     if (opts.theme === 'auto' && window.matchMedia) {
