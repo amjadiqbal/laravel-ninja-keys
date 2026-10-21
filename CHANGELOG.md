@@ -5,7 +5,7 @@ All notable changes to `laravel-ninja-keys` are documented here. The format foll
 
 ## [Unreleased]
 
-## [1.0.0] - unreleased
+## [1.0.0] - 2026-10-21
 
 First tagged release; until now the package was only installable as `dev-main`.
 
@@ -40,3 +40,6 @@ First tagged release; until now the package was only installable as `dev-main`.
   `ninja-keys-config`.
 - Actions without an `id` or `title` throw `InvalidArgumentException` instead of being skipped or
   rendering "undefined".
+
+[Unreleased]: https://github.com/amjadiqbal/laravel-ninja-keys/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/amjadiqbal/laravel-ninja-keys/releases/tag/v1.0.0
